@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Header, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import Optional, List
 from sqlalchemy.orm import Session
@@ -13,10 +13,16 @@ class LogEntryCreate(BaseModel):
     level: LogLevel
     message: str
     process_name: str
-    timestamp: datetime = datetime.utcnow()
+    timestamp: datetime = datetime.now()
+
+class APIKeyCreate(BaseModel):
+    owner_email: EmailStr
 
 class APIKeyResponse(BaseModel):
     key: str
+    owner_email: EmailStr
+    created_at: datetime
+    deactivated_at: Optional[datetime] = None
 
 
 def verify_api_key(x_api_key: Optional[str] = Header(None), db: Session = Depends(get_db)):
@@ -25,15 +31,26 @@ def verify_api_key(x_api_key: Optional[str] = Header(None), db: Session = Depend
 
 
 @router.post("/keys/", response_model=APIKeyResponse)
-def create_api_key(request: Request, x_admin_api_key: Optional[str] = Header(None), db: Session = Depends(get_db)):
+def create_api_key(
+    request: Request,
+    api_key_data: APIKeyCreate,
+    x_admin_api_key: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
     if x_admin_api_key != request.app.state.ADMIN_API_KEY:
         raise HTTPException(status_code=403, detail="Unauthorized: Invalid admin key")
 
     new_key = secrets.token_hex(32)
-    api_key = APIKey(key=new_key, created_at=datetime.utcnow())
+    api_key = APIKey(
+        key=new_key,
+        created_at=datetime.utcnow(),
+        owner_email=api_key_data.owner_email,
+        deactivated_at=None
+    )
     db.add(api_key)
     db.commit()
-    return {"key": new_key}
+    db.refresh(api_key)
+    return api_key
 
 @router.post("/logs/")
 def post_log(entry: LogEntryCreate, db: Session = Depends(get_db), api_key: str = Depends(verify_api_key)):

@@ -32,6 +32,8 @@ class APIKey(Base):
     __tablename__ = "api_keys"
     key = Column(String, primary_key=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    owner_email = Column(String, nullable=False)
+    deactivated_at = Column(DateTime, nullable=True)
 
 class LogEntry(Base):
     __tablename__ = "logs"
