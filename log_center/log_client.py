@@ -71,21 +71,6 @@ class LogWriter:
                 except requests.exceptions.RequestException:
                     file.write(line)
                     print("Failed to flush log entry.")
-    
-    def request_api_key(self, admin_api_key: str, owner_email: str):
-        headers = {
-            "x-admin-api-key": admin_api_key,
-            "Content-Type": "application/json"
-        }
-        data = {"owner_email": owner_email}
-        try:
-            response = requests.post(f"{self.api_url}/keys/", headers=headers, json=data)
-            if response.status_code == 200:
-                return response.json()["key"]
-            else:
-                raise Exception(f"Failed to obtain API key: {response.status_code} {response.text}")
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"Request failed: {e}")
 
 # Example usage
 if __name__ == "__main__":
@@ -100,8 +85,3 @@ if __name__ == "__main__":
     except Exception as e:
         print("Error:", e)
     
-    try:
-        new_api_key = logger.request_api_key(ADMIN_API_KEY)
-        print("New API Key Generated:", new_api_key)
-    except Exception as e:
-        print("Failed to generate API key:", e)

@@ -78,7 +78,7 @@ def deactivate_user(
     return {"message": "User and all their keys deactivated", "user": approved_user}
 
 
-@router.post("/keys/", response_model=APIKeyResponse)
+@router.post("/keys/create", response_model=APIKeyResponse)
 def create_api_key(
     request: Request,
     api_key_data: APIKeyCreate,
