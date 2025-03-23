@@ -16,7 +16,7 @@ class LogWriter:
             "Content-Type": "application/json"
         }
     
-    def log(self, level: LogLevel, message: str, process_name: str):
+    def _log(self, level: LogLevel, message: str, process_name: str):
         log_data = {
             "level": level.value,
             "message": message,
@@ -40,6 +40,18 @@ class LogWriter:
         
         self._write_to_file(log_data)
         raise Exception(f"Failed to log message after {self.max_retries} attempts. Logged to file instead.")
+    
+    def log_debug(self, message: str, process_name: str):
+        return self._log(LogLevel.DEBUG, message, process_name)
+    
+    def log_info(self, message: str, process_name: str):
+        return self._log(LogLevel.INFO, message, process_name)
+    
+    def log_warning(self, message: str, process_name: str):
+        return self._log(LogLevel.WARNING, message, process_name)
+    
+    def log_error(self, message: str, process_name: str):
+        return self._log(LogLevel.ERROR, message, process_name)
     
     def _write_to_file(self, log_data):
         with open(self.log_file, "a") as file:
