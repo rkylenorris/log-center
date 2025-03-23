@@ -119,7 +119,7 @@ logger.request_api_key(admin_api_key="your-admin-key", owner_email="me@example.c
 
 ## 📁 Project Structure
 
-```
+```markdown
 log_center/
 ├── api.py         # All API routes
 ├── log_client.py  # Python logger class
