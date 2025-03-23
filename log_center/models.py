@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, create_engine
+from sqlalchemy import Column, String, DateTime, create_engine, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from datetime import datetime
@@ -31,7 +31,7 @@ class LogLevel(str, Enum):
 class APIKey(Base):
     __tablename__ = "api_keys"
     key = Column(String, primary_key=True, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
     owner_email = Column(String, nullable=False)
     deactivated_at = Column(DateTime, nullable=True)
 
@@ -41,6 +41,22 @@ class LogEntry(Base):
     level = Column(String, index=True)
     message = Column(String)
     process_name = Column(String, index=True)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=datetime.now)
+    
+class ApprovedUser(Base):
+    __tablename__ = "approved_users"
+    email = Column(String, primary_key=True, index=True)
+    name = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+    active = Column(Boolean, default=True)
+    deactivated_at = Column(DateTime, nullable=True)
+    
+    def __init__(self, email: str, name: str = None):
+        self.email = email
+        self.name = name
+        self.created_at = datetime.now()
+        self.active = True
+        self.deactivated_at = None
+    
 
 Base.metadata.create_all(bind=engine)
