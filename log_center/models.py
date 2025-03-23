@@ -63,5 +63,9 @@ class ApprovedUser(Base):
         self.active = True
         self.deactivated_at = None
     
+    def deactivate_user(self):
+        self.active = False
+        self.deactivated_at = datetime.now()
+    
 
 Base.metadata.create_all(bind=engine)

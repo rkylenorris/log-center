@@ -51,6 +51,32 @@ def approve_user(
     db.refresh(approved_user)
     return {"message": "User approved", "user": approved_user}
 
+@router.post("/users/deactivate")
+def deactivate_user(
+    user: ApprovedUserCreate,
+    request: Request,
+    x_admin_api_key: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    if x_admin_api_key != request.app.state.ADMIN_API_KEY:
+        raise HTTPException(status_code=403, detail="Unauthorized: Invalid admin key")
+    
+    approved_user = db.query(ApprovedUser).filter(ApprovedUser.email == user.email).first()
+    if not approved_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    users_keys = db.query(APIKey).filter(APIKey.owner_email == user.email, APIKey.active == True).all()
+    
+    if users_keys:
+        for api_key in users_keys:
+            api_key.deactivate_key()
+    
+    approved_user.deactivate_user()
+    
+    db.commit()
+    db.refresh(approved_user)
+    return {"message": "User and all their keys deactivated", "user": approved_user}
+
 
 @router.post("/keys/", response_model=APIKeyResponse)
 def create_api_key(
