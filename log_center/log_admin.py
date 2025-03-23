@@ -9,6 +9,24 @@ class LogAdmin:
         if not self.admin_api_key:
             raise ValueError("Admin API key not found in environment variables.")
     
+    def add_approved_user(self, owner_email: str, owner_name: str = None):
+        headers = {
+            "x-admin-api-key": self.admin_api_key,
+            "Content-Type": "application/json"
+        }
+        
+        data = {"owner_email": owner_email, "owner_name": owner_name}
+        
+        try:
+            response = requests.post(f"{self.api_url}/users/approve", headers=headers, json=data)
+            if response.status_code == 200:
+                return response.json()
+            else:
+                raise Exception(f"Failed to add approved user: {response.status_code} {response.text}")
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Request failed: {e}")
+        
+    
     def request_api_key(self, owner_email: str, owner_name: str = None):
         
         headers = {
@@ -22,7 +40,7 @@ class LogAdmin:
             data = {"owner_email": owner_email, "owner_name": owner_name}
         
         try:
-            response = requests.post(f"{self.api_url}/keys/", headers=headers, json=data)
+            response = requests.post(f"{self.api_url}/keys/create", headers=headers, json=data)
             if response.status_code == 200:
                 return response.json()["key"]
             else:
