@@ -34,6 +34,11 @@ class APIKey(Base):
     created_at = Column(DateTime, default=datetime.now)
     owner_email = Column(String, nullable=False)
     deactivated_at = Column(DateTime, nullable=True)
+    active = Column(Boolean, default=True)
+    
+    def deactivate_key(self):
+        self.active = False
+        self.deactivated_at = datetime.now()
 
 class LogEntry(Base):
     __tablename__ = "logs"

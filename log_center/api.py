@@ -31,7 +31,7 @@ class ApprovedUserCreate(BaseModel):
 
 
 def verify_api_key(x_api_key: Optional[str] = Header(None), db: Session = Depends(get_db)):
-    if not x_api_key or not db.query(APIKey).filter(APIKey.key == x_api_key, APIKey.deactivated_at == None).first():
+    if not x_api_key or not db.query(APIKey).filter(APIKey.key == x_api_key, APIKey.active == True).first():
         raise HTTPException(status_code=401, detail="Invalid API key")
 
 
@@ -93,7 +93,8 @@ def deactivate_api_key(
     if not api_key:
         raise HTTPException(status_code=404, detail="API key not found")
 
-    api_key.deactivated_at = datetime.now()
+    api_key.deactivate_key()
+    
     db.commit()
     db.refresh(api_key)
     return api_key
@@ -114,7 +115,7 @@ def deactivate_api_key_by_owner(
         raise HTTPException(status_code=404, detail="No active API keys found for this owner")
 
     for api_key in api_keys:
-        api_key.deactivated_at = datetime.now()
+        api_key.deactivate_key()
         
     db.commit()
 
@@ -130,7 +131,7 @@ def get_active_api_keys_by_owner(
     if x_admin_api_key != request.app.state.ADMIN_API_KEY:
         raise HTTPException(status_code=403, detail="Unauthorized: Invalid admin key")
     
-    api_keys = db.query(APIKey).filter(APIKey.owner_email == owner_email, APIKey.deactivated_at == None).all()
+    api_keys = db.query(APIKey).filter(APIKey.owner_email == owner_email, APIKey.active == True).all()
     if not api_keys:
         raise HTTPException(status_code=404, detail="No active API keys found for this owner")
     return api_keys
@@ -145,7 +146,7 @@ def get_active_api_keys(
     if x_admin_api_key != request.app.state.ADMIN_API_KEY:
         raise HTTPException(status_code=403, detail="Unauthorized: Invalid admin key")
     
-    api_keys = db.query(APIKey).filter(APIKey.deactivated_at == None).all()
+    api_keys = db.query(APIKey).filter(APIKey.active == True).all()
     if not api_keys:
         raise HTTPException(status_code=404, detail="No active API keys found")
     return api_keys
@@ -159,7 +160,7 @@ def get_deactivated_api_keys(
     if x_admin_api_key != request.app.state.ADMIN_API_KEY:
         raise HTTPException(status_code=403, detail="Unauthorized: Invalid admin key")
     
-    api_keys = db.query(APIKey).filter(APIKey.deactivated_at != None).all()
+    api_keys = db.query(APIKey).filter(APIKey.active == False).all()
     if not api_keys:
         raise HTTPException(status_code=404, detail="No deactivated API keys found")
     return api_keys
