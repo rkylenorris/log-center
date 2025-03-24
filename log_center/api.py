@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header, Request
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
-from .models import LogEntry, APIKey, get_db, LogLevel, ApprovedUser
+from .models import LogEntry, APIKey, get_db, LogLevel, KeyHolder
 
 router = APIRouter()
 
@@ -25,7 +25,7 @@ class APIKeyResponse(BaseModel):
     created_at: datetime
     deactivated_at: Optional[datetime] = None
 
-class ApprovedUserCreate(BaseModel):
+class KeyHolderCreate(BaseModel):
     email: EmailStr
     name: Optional[str] = None
 
@@ -37,7 +37,7 @@ def verify_api_key(x_api_key: Optional[str] = Header(None), db: Session = Depend
 
 @router.post("/users/approve")
 def approve_user(
-    user: ApprovedUserCreate,
+    user: KeyHolderCreate,
     request: Request,
     x_admin_api_key: Optional[str] = Header(None),
     db: Session = Depends(get_db)
@@ -45,15 +45,15 @@ def approve_user(
     if x_admin_api_key != request.app.state.ADMIN_API_KEY:
         raise HTTPException(status_code=403, detail="Unauthorized: Invalid admin key")
     
-    approved_user = ApprovedUser(email=user.email, name=user.name)
-    db.add(approved_user)
+    key_holder = KeyHolder(email=user.email, name=user.name)
+    db.add(key_holder)
     db.commit()
-    db.refresh(approved_user)
-    return {"message": "User approved", "user": approved_user}
+    db.refresh(key_holder)
+    return {"message": "User approved", "user": key_holder}
 
 @router.post("/users/deactivate")
 def deactivate_user(
-    user: ApprovedUserCreate,
+    user: KeyHolderCreate,
     request: Request,
     x_admin_api_key: Optional[str] = Header(None),
     db: Session = Depends(get_db)
@@ -61,7 +61,7 @@ def deactivate_user(
     if x_admin_api_key != request.app.state.ADMIN_API_KEY:
         raise HTTPException(status_code=403, detail="Unauthorized: Invalid admin key")
     
-    approved_user = db.query(ApprovedUser).filter(ApprovedUser.email == user.email).first()
+    approved_user = db.query(KeyHolder).filter(KeyHolder.email == user.email).first()
     if not approved_user:
         raise HTTPException(status_code=404, detail="User not found")
     
@@ -88,14 +88,14 @@ def create_api_key(
     if x_admin_api_key != request.app.state.ADMIN_API_KEY:
         raise HTTPException(status_code=403, detail="Unauthorized: Invalid admin key")
     
-    approved = db.query(ApprovedUser).filter(ApprovedUser.email == api_key_data.owner_email, ApprovedUser.active == True).first()
+    approved = db.query(KeyHolder).filter(KeyHolder.email == api_key_data.owner_email, KeyHolder.active == True).first()
     if not approved:
         raise HTTPException(status_code=403, detail="Email is not approved to receive an API key")
 
     new_key = secrets.token_hex(32)
     api_key = APIKey(
         key=new_key,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(),
         owner_email=api_key_data.owner_email,
         deactivated_at=None
     )
