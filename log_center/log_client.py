@@ -4,10 +4,16 @@ import time
 import os
 from .models import LogLevel
 
+from colorama import init, Fore, Style, Back
+
+init(autoreset=True)
+
 class LogWriter:
-    def __init__(self, api_url: str, api_key: str, log_file: str = "failed_logs.txt", max_retries: int = 3, retry_delay: float = 2.0):
+    def __init__(self, api_url: str, api_key: str, console_level: LogLevel = LogLevel.INFO, 
+                 log_file: str = "failed_logs.txt", max_retries: int = 3, retry_delay: float = 2.0):
         self.api_url = api_url.rstrip('/')  # Ensure no trailing slash
         self.api_key = api_key
+        self.console_level = console_level
         self.log_file = log_file
         self.max_retries = max_retries
         self.retry_delay = retry_delay
@@ -15,13 +21,37 @@ class LogWriter:
             "x-api-key": self.api_key,
             "Content-Type": "application/json"
         }
+        self.color_map = {
+            "DEBUG": Fore.GREEN,
+            "INFO": Fore.WHITE,
+            "WARNING": Fore.YELLOW,
+            "ERROR": Fore.RED
+        }
+        self.start_time = datetime.datetime.now()
+    
+    
+    def print_header(self, process_name: str, include_start_time: bool = True):
+        padding = 10
+        
+        heading = f"DATETIME | PROCESS NAME | LEVEL | MESSAGE"
+        if include_start_time:
+            heading = f"\nLogging Started: {self.start_time.strftime('%Y-%m-%d %H:%M:%S')} \n{'='*padding}" + heading
+        else:
+            heading = f"\n{'='*padding}" + heading + f"{'='*padding}"
+        
+        print(Back.LIGHTWHITE_EX + Fore.BLACK + heading + Style.RESET_ALL)
+    
+    def _log_to_console(self, date_time: datetime.datetime, process_name: str, level: LogLevel, message: str):
+        color = self.color_map.get(level.name, Fore.GREEN)
+        print(f"{color}{date_time.strftime("%Y-%m-%d %H:%M:%S")} | {process_name} | {level.value}: {message}{Style.RESET_ALL}")
     
     def _log(self, level: LogLevel, message: str, process_name: str):
+        log_time = datetime.datetime.now()
         log_data = {
             "level": level.value,
             "message": message,
             "process_name": process_name,
-            "timestamp": datetime.datetime.now().isoformat()
+            "timestamp": log_time.isoformat()
         }
         
         for attempt in range(self.max_retries):
@@ -32,7 +62,7 @@ class LogWriter:
                     self._flush_failed_logs()
                     return response.json()
                 else:
-                    print(f"Attempt {attempt + 1} failed: {response.status_code} {response.text}")
+                    print(f"Log attempt {attempt + 1} failed: {response.status_code} {response.text}")
                     time.sleep(self.retry_delay)
             except requests.exceptions.RequestException as e:
                 print(f"Request failed: {e}")
