@@ -248,14 +248,14 @@ def get_recent_logs(limit: int, db: Session = Depends(get_db), api_key: str = De
 
 @router.get("/logs/date/{date}", response_model=List[LogEntryCreate])
 def get_logs_by_date(date: str, db: Session = Depends(get_db), api_key: str = Depends(verify_api_key)):
-    filtered_logs = db.query(LogEntry).filter(LogEntry.timestamp.startswith(date)).all()
+    filtered_logs = db.query(LogEntry).filter(LogEntry.timestamp >= date).all()
     if not filtered_logs:
         raise HTTPException(status_code=404, detail="No logs found for this date")
     return filtered_logs
 
 @router.get("/logs/filter/date-range/{start_date}/{end_date}", response_model=List[LogEntryCreate])
 def get_logs_by_date_range(start_date: str, end_date: str, db: Session = Depends(get_db), api_key: str = Depends(verify_api_key)):
-    filtered_logs = db.query(LogEntry).filter(LogEntry.timestamp.between(start_date, end_date)).all()
+    filtered_logs = db.query(LogEntry).filter(LogEntry.timestamp >= start_date, LogEntry.timestamp <= end_date).all()
     if not filtered_logs:
         raise HTTPException(status_code=404, detail="No logs found for this date range")
     return filtered_logs
