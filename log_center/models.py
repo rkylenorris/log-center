@@ -17,9 +17,6 @@ url = make_url(DATABASE_URL)
 connect_args = {"check_same_thread": False} if url.drivername.startswith("sqlite") else {}
 
 engine = create_engine(DATABASE_URL, connect_args=connect_args)
-
-
-# engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -76,6 +73,3 @@ class KeyHolder(Base):
     def deactivate_user(self):
         self.active = False
         self.deactivated_at = datetime.now()
-    
-
-Base.metadata.create_all(bind=engine)

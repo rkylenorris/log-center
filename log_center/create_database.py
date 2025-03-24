@@ -1,5 +1,6 @@
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.exc import OperationalError
+from sqlalchemy import inspect
 import psycopg2
 import pymysql
 import pyodbc
@@ -14,8 +15,20 @@ def create_database(database_url: str):
         _create_mysql_db(url, db_name)
     elif url.drivername.startswith("mssql"):
         _create_sqlserver_db(url, db_name)
+    elif url.drivername.startswith("sqlite"):
+        # SQLite does not require explicit database creation
+        pass
     else:
         raise ValueError("Unsupported database dialect")
+    
+    from .models import Base, engine
+
+    inspector = inspect(engine)
+    tables_needed = Base.metadata.tables.keys()
+    existing_tables = inspector.get_table_names()
+
+    if not all(table in existing_tables for table in tables_needed):
+        Base.metadata.create_all(bind=engine)
 
 def _create_postgres_db(url, db_name):
     conn = psycopg2.connect(
