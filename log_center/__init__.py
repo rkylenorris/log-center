@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from .api import router
-from .models import LogEntry, APIKey, LogLevel, get_db
+from .models import LogEntry, APIKey, LogLevel, get_db, Base
 from .log_client import LogWriter
 from .log_query import LogQuery
 from .log_admin import LogAdmin
