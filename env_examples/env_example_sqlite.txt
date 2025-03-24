@@ -1,0 +1,6 @@
+LOG_CENTER_ADMIN_KEY=your_admin_api_key_here
+LOG_CENTER_USER_KEY=your_user_api_key_here
+LOG_CENTER_DATABASE_URL=sqlite:///./log_center.db
+LOG_CENTER_HOST=your_log_center_host_here
+LOG_CENTER_PORT=your_log_center_port_here
+LOG_CENTER_API_URL=your_log_center_full_url_here
