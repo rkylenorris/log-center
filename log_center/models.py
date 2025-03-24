@@ -4,13 +4,22 @@ from sqlalchemy.orm import sessionmaker, Session, relationship
 from datetime import datetime
 from enum import Enum
 from dotenv import load_dotenv
+from sqlalchemy.engine.url import make_url
 import os
 
 load_dotenv()
 
 DATABASE_URL = os.getenv("LOG_CENTER_DATABASE_URL", "sqlite:///./logs.db")
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+
+
+url = make_url(DATABASE_URL)
+connect_args = {"check_same_thread": False} if url.drivername.startswith("sqlite") else {}
+
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
+
+
+# engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
