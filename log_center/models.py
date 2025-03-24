@@ -1,6 +1,6 @@
-from sqlalchemy import Column, String, DateTime, create_engine, Boolean
+from sqlalchemy import Column, String, DateTime, create_engine, Boolean, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session, relationship
 from datetime import datetime
 from enum import Enum
 from dotenv import load_dotenv
@@ -8,7 +8,7 @@ import os
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./logs.db")
+DATABASE_URL = os.getenv("LOG_CENTER_DATABASE_URL", "sqlite:///./logs.db")
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -32,7 +32,7 @@ class APIKey(Base):
     __tablename__ = "api_keys"
     key = Column(String, primary_key=True, index=True)
     created_at = Column(DateTime, default=datetime.now)
-    owner_email = Column(String, nullable=False)
+    owner_email = Column(String, ForeignKey("key_holders.email"))
     deactivated_at = Column(DateTime, nullable=True)
     active = Column(Boolean, default=True)
     
@@ -48,10 +48,11 @@ class LogEntry(Base):
     process_name = Column(String, index=True)
     timestamp = Column(DateTime, default=datetime.now)
     
-class ApprovedUser(Base):
-    __tablename__ = "approved_users"
+class KeyHolder(Base):
+    __tablename__ = "key_holders"
     email = Column(String, primary_key=True, index=True)
     name = Column(String, nullable=True)
+    keys = relationship("APIKey", back_populates="api_key")
     created_at = Column(DateTime, default=datetime.now)
     active = Column(Boolean, default=True)
     deactivated_at = Column(DateTime, nullable=True)
