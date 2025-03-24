@@ -24,4 +24,10 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.8",
+    entry_points={
+        'console_scripts': [
+            'logcenter-init-db=log_center.create_database:main',
+        ]
+    }
+
 )
