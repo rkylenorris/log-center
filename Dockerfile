@@ -1,11 +1,14 @@
-FROM python:3.10-slim
+FROM python:3.10
 
-WORKDIR /log_center
+WORKDIR /app
 COPY . .
 
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
-RUN apt-get update && apt-get install -y netcat
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends netcat-openbsd bash && \
+    rm -rf /var/lib/apt/lists/*
+
 
 RUN chmod +x entrypoint.sh
 
